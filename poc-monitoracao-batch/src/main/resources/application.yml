@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: poc-monitoracao-batch
+  main:
+    allow-bean-definition-overriding: true
+  profiles:
+    active: local
+
+  kafka:
+    producer:
+      batch-size: ${KAFKA_BATCH_SIZE:2049}
+      buffer-memory: ${KAFKA_BUFFER_MEMORY:33554432}
+      retries: 0
+      acks: ${ACKS:all}
+      properties:
+        max.block.ms: ${KAFKA_MAX_BLOCK_MS:600}
+        linger.ms: ${KAFKA_LINGER_MS:0}
+        request.timeout.ms: ${KAFKA_TIMEOUT:100}
+    bootstrap-servers: ${KAFKA_HOSTS:localhost:9092}
+    consumer:
+      enable-auto-commit: false            
+      group-id: ${KAFKA_GROUP_ID:poc-monitoracao}
+      offset: ${KAFKA_OFFSET_RESET:earliest}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer 
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+  cloud:
+    consul:
+      host: ${CONSUL_SERVER_HOST:localhost}
+      port: ${CONSUL_SERVER_PORT:8500}
+      discovery: 
+        instanceId: ${spring.application.name}:${random.value}
+        prefer-ip-address: true
+        tags: pod=${HOSTNAME:default},environment=${spring.profiles.active}
+        healthCheckPath: /actuator/health
+        healthCheckInterval: 20s
+      
+monitoracao:
+  topic: ${KAFKA_TOPIC_ATZ_BI:monitoracao-topic-v1}
+  kafka:
+     concurrency: ${KAFKA_CONCURRENCY:3}
+  async:
+    core-pool-size: ${ATZ_CORE_POOL_SIZE:2}
+    max-pool-capacity: ${ATZ_MAX_POOL_SIZE:2}
+    queue-capacity: ${ATZ_QUEUE_CAPACITY:30}
+    thread-name-prefix: ATZ-ASYNC- 
+ 
+   
+---      
+
+spring:
+  profiles: local
+  cloud:
+    consul:
+      enabled: false
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: ${REDIS_TIMEOUT:200}
+   
